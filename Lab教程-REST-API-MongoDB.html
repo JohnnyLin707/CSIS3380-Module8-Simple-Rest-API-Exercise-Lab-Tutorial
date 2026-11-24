@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSIS 3380 · REST API on MongoDB — 完整通关教程 (Johnny)</title>
+<style>
+  :root { --navy:#1a3a5c; --blue:#2d6ca2; --bg:#f4f7fb; --line:#d7e0ea; --green:#2e7d32; --red:#c62828; --amber:#b26a00; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI",Arial,"Microsoft YaHei",sans-serif; background:var(--bg); color:#24313f; line-height:1.65; }
+  header { background:linear-gradient(120deg,var(--navy),var(--blue)); color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:4px 0; opacity:.92; }
+  .badge { display:inline-block; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); padding:3px 10px; border-radius:12px; font-size:13px; margin-right:8px; }
+  .wrap { max-width:1020px; margin:0 auto; padding:26px 22px 80px; }
+  .toc { background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px 22px; margin-bottom:26px; }
+  .toc h2 { margin:0 0 10px; font-size:17px; color:var(--navy); }
+  .toc a { display:inline-block; margin:3px 14px 3px 0; color:var(--blue); text-decoration:none; font-size:14px; }
+  .toc a:hover { text-decoration:underline; }
+  section { background:#fff; border:1px solid var(--line); border-radius:10px; padding:22px 26px; margin-bottom:20px; box-shadow:0 2px 6px rgba(20,50,80,.04); }
+  section h2 { color:var(--navy); border-bottom:3px solid var(--line); padding-bottom:8px; margin-top:0; font-size:21px; }
+  section h3 { color:var(--blue); margin:22px 0 8px; font-size:17px; }
+  code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-family:Consolas,"Courier New",monospace; font-size:13px; }
+  .codebox { position:relative; margin:12px 0 18px; }
+  .codebox .bar { display:flex; justify-content:space-between; align-items:center; background:#263545; color:#cdd8e3; padding:5px 12px; border-radius:8px 8px 0 0; font-size:12px; }
+  .codebox button { background:#3f7fb8; color:#fff; border:0; border-radius:4px; padding:3px 10px; cursor:pointer; font-size:12px; }
+  .codebox button:hover { background:#2d6ca2; }
+  pre { margin:0; background:#15202b; color:#e6edf3; padding:14px 16px; border-radius:0 0 8px 8px; overflow:auto; font-family:Consolas,"Courier New",monospace; font-size:13px; line-height:1.5; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:14px; }
+  th,td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--navy); color:#fff; }
+  tr:nth-child(even) td { background:#f7fafc; }
+  .note,.warn,.ok { border-left:5px solid; padding:10px 14px; margin:14px 0; border-radius:0 6px 6px 0; }
+  .note { border-color:var(--blue); background:#eef5fb; }
+  .warn { border-color:var(--amber); background:#fff7e8; }
+  .ok { border-color:var(--green); background:#eef8ef; }
+  .step { display:inline-block; background:var(--navy); color:#fff; width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; margin-right:8px; font-size:14px; }
+  ul.check { list-style:none; padding-left:0; }
+  ul.check li { padding:5px 0 5px 30px; position:relative; }
+  ul.check li:before { content:"☐"; position:absolute; left:4px; color:var(--blue); font-size:17px; }
+  .tree { background:#15202b; color:#b8d4ec; padding:16px; border-radius:8px; font-family:Consolas,monospace; font-size:13px; white-space:pre; overflow:auto; }
+  footer { text-align:center; color:#7a8a9a; font-size:13px; padding:20px; }
+  .pill { background:#e8f0f8; color:var(--navy); border-radius:10px; padding:2px 9px; font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>REST API on MongoDB — Exercise Lab 通关教程</h1>
+  <p><span class="badge">CSIS 3380</span><span class="badge">Douglas College</span><span class="badge">Johnny</span><span class="badge">Module 8</span></p>
+  <p>目标：用 Express + Mongoose 连 MongoDB Atlas，建 <code>UserList</code> 数据库的 <code>users</code> 集合，完成 CRUD + 错误处理 + 随机用户 + 部署，提交拿满 1 分。</p>
+  <p>预计耗时：60–90 分钟（含 Atlas 注册与 Render 部署）。每一阶段都有「✅ 过关检查」，没过先别往下走。</p>
+</header>
+
+<div class="wrap">
+
+<div class="toc">
+  <h2>目录（点标题直接跳）</h2>
+  <a href="#s0">0 准备工具</a>
+  <a href="#s1">1 建 Atlas 数据库</a>
+  <a href="#s2">2 建项目 + 装依赖</a>
+  <a href="#s3">3 .env 与 .gitignore</a>
+  <a href="#s4">4 Model</a>
+  <a href="#s5">5 路由 CRUD</a>
+  <a href="#s6">6 server.js</a>
+  <a href="#s7">7 跑起来 + Postman 测试</a>
+  <a href="#s8">8 排错表</a>
+  <a href="#s9">9 部署 Render</a>
+  <a href="#s10">10 提交 Blackboard</a>
+  <a href="#appendix">附录：完整目录树</a>
+</div>
+
+<div class="note">
+  <strong>为什么要照着老师的代码格式写？</strong> Module 8 的 <code>book-store-api-checkpoints/final</code> 就是这份 Lab 的“标准骨架”：CommonJS <code>require</code>、<code>dotenv</code>、先连 Mongo 再 <code>app.listen</code>、Router 分文件、四参数错误处理器。下面每一步都沿用它的格式，只把业务字段从书换成用户。
+</div>
+
+<section id="s0">
+  <h2><span class="step">0</span>准备工具（5 分钟）</h2>
+  <table>
+    <tr><th>要装/要注册</th><th>检查方式</th><th>备注</th></tr>
+    <tr><td>Node.js 18+ 与 npm</td><td><code>node -v</code> / <code>npm -v</code></td><td>建议 Node 20 或 22 LTS</td></tr>
+    <tr><td>VS Code</td><td><code>code --version</code></td><td>装个 REST Client 或 Postman 桌面版</td></tr>
+    <tr><td>MongoDB Atlas 免费账号</td><td>能登录 cloud.mongodb.com</td><td>免费 M0 集群足够</td></tr>
+    <tr><td>Postman（或 Thunder Client）</td><td>能发 GET/POST 请求</td><td>也可以用 curl，下面给 Postman 步骤</td></tr>
+    <tr><td>Render 账号</td><td>能登录 render.com</td><td>用 GitHub 登录最省事</td></tr>
+  </table>
+  <div class="ok"><strong>✅ 过关</strong>：上面五个都能打开/有版本号。</div>
+</section>
+
+<section id="s1">
+  <h2><span class="step">1</span>MongoDB Atlas：建集群 + 建数据库 + 拿连接串（15 分钟）</h2>
+
+  <h3>1-1 建免费集群</h3>
+  <ol>
+    <li>登录 <code>https://cloud.mongodb.com</code> → <strong>Project</strong> → <strong>Create a Project</strong>，名字随意（如 <code>CSIS3380</code>）。</li>
+    <li>点 <strong>Create a Database Deployments</strong> → 选 <strong>M0 Free</strong> → Provider 随便选（AWS 最稳）→ Region 选离你近的 → 集群名随意 → <strong>Create Deployment</strong>。</li>
+    <li>创建用户名密码（<strong>记住它们</strong>，连接串要用），点 <strong>Create Database User</strong>。</li>
+  </ol>
+
+  <h3>1-2 允许公网访问（部署必做，本地也建议先做）</h3>
+  <p>左侧 <strong>Network Access</strong> → <strong>Add IP Address</strong> → 选 <strong>Allow Access from Anywhere</strong>（即 <code>0.0.0.0/0</code>）→ Confirm。免费版必须这样，Render 的 IP 不固定。</p>
+
+  <h3>1-3 让连接串里的数据库名变成 UserList</h3>
+  <p>点 <strong>Connect</strong> → <strong>Drivers</strong> → Node.js → 复制连接串，形如：</p>
+  <div class="codebox"><div class="bar"><span>连接串模板（先在记事本里存着）</span><button onclick="copyCode(this)">复制</button></div><pre>mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/UserList?retryWrites=true&amp;w=majority</pre></div>
+  <div class="warn"><strong>关键点</strong>：<code>mongodb.net/</code> 后面必须写 <code>UserList</code>，这就是题目要求的数据库名。如果那里是 <code>test</code> 或空的，Mongoose 会把数据写进错库。密码里有特殊字符时要做 URL 编码（例如 <code>@</code> 写成 <code>%40</code>）。</div>
+
+  <h3>1-4 建 users 集合（可跳过）</h3>
+  <p>其实不用手动建：Django/Express 里第一次 <code>User.create()</code> 时，Mongoose 会自动在 <code>UserList</code> 下建 <code>users</code> 集合（<code>model('User')</code> 复数化就是 <code>users</code>）。想先建也行：Atlas → <strong>Browse Collections</strong> → <strong>Create Collection</strong>，库名 <code>UserList</code>，集合名 <code>users</code>。</p>
+
+  <div class="ok"><strong>✅ 过关</strong>：你手上有一段完整的 <code>mongodb+srv://...</code> 连接串，且其中包含 <code>/UserList</code>。</div>
+</section>
+
+<section id="s2">
+  <h2><span class="step">2</span>建项目文件夹 + 安装依赖（8 分钟）</h2>
+
+  <h3>2-1 在当前文件夹里建项目</h3>
+  <div class="note">本教程文件所在的文件夹就是作业根目录。打开 VS Code 终端（PowerShell），<code>cd</code> 到这里，然后建项目子文件夹（名字随意，建议 <code>userlist-api-johnny</code>）。</div>
+  <div class="codebox"><div class="bar"><span>PowerShell</span><button onclick="copyCode(this)">复制</button></div><pre>cd "c:/Users/Johnny's Desktop/OneDrive/3380-Full Stack Development With Javascript/Module 8 Serving MongoDB using REST API/CSIS3380 Module8 Simple Rest API Exercise Lab"
+mkdir userlist-api-johnny
+cd userlist-api-johnny
+npm init -y
+npm install express@^5.1.0 mongoose@^9.0.0 dotenv@^17.2.0 cors@^2.8.5</pre></div>
+  <p>再建两个子目录和三个空文件：</p>
+  <div class="codebox"><div class="bar"><span>PowerShell</span><button onclick="copyCode(this)">复制</button></div><pre>mkdir models, routes
+New-Item .env, .env.example, .gitignore
+New-Item models/User.js, routes/users.js, server.js</pre></div>
+
+  <h3>2-2 写 package.json</h3>
+  <p>用下面内容<strong>全部覆盖</strong> <code>package.json</code>：</p>
+  <div class="codebox"><div class="bar"><span>package.json</span><button onclick="copyCode(this)">复制</button></div><pre>{
+  "name": "userlist-api-johnny",
+  "version": "1.0.0",
+  "description": "CSIS 3380 REST API on MongoDB - Johnny, Douglas College",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --watch server.js",
+    "serve": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "mongoose": "^9.0.0"
+  }
+}</pre></div>
+  <div class="warn"><strong>模块规范提醒</strong>：这里<strong>不要</strong>加 <code>"type": "module"</code>。下面所有代码都用 <code>require</code>（CommonJS），两者必须配对。混用会报 <code>require is not defined in ES module scope</code>——这正是你在 Module 2 几个老师文件夹里踩过的坑。</div>
+
+  <div class="ok"><strong>✅ 过关</strong>：<code>node_modules/</code> 存在，<code>package.json</code> 里有四个依赖，且没有 <code>"type"</code> 字段。</div>
+</section>
+
+<section id="s3">
+  <h2><span class="step">3</span>.env 与 .gitignore（3 分钟）</h2>
+
+  <h3>3-1 .env（真实连接串，本地用）</h3>
+  <div class="codebox"><div class="bar"><span>.env</span><button onclick="copyCode(this)">复制</button></div><pre>MONGODB_URI=mongodb+srv://你的用户名:你的密码@你的集群.mongodb.net/UserList?retryWrites=true&amp;w=majority
+PORT=3000</pre></div>
+  <p>把第 1 步拿到的连接串粘进去，并注意：连接串里那一大段含 <code>&amp;</code> 的 query 参数不要漏。</p>
+
+  <h3>3-2 .env.example（交作业用，不含密码）</h3>
+  <div class="codebox"><div class="bar"><span>.env.example</span><button onclick="copyCode(this)">复制</button></div><pre>MONGODB_URI=mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/UserList?retryWrites=true&amp;w=majority
+PORT=3000</pre></div>
+
+  <h3>3-3 .gitignore（必须！否则上传会泄露密码）</h3>
+  <div class="codebox"><div class="bar"><span>.gitignore</span><button onclick="copyCode(this)">复制</button></div><pre>node_modules/
+.env</pre></div>
+
+  <div class="ok"><strong>✅ 过关</strong>：三个文件都在项目根目录，<code>.env</code> 里是你的真实连接串。</div>
+</section>
+
+<section id="s4">
+  <h2><span class="step">4</span>写 Model：models/User.js（5 分钟）</h2>
+  <div class="note">题目写的三个字段：<code>id: number, unique, required</code>、<code>email: text, required</code>、<code>username: text</code>。<strong>Mongoose 没有 text 类型，一律用 String</strong>。<code>unique: true</code> 要自己加（老师书本例子里没有）。</div>
+  <div class="codebox"><div class="bar"><span>models/User.js</span><button onclick="copyCode(this)">复制</button></div><pre>const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema(
+  {
+    id: { type: Number, required: true, unique: true },
+    email: { type: String, required: true, trim: true },
+    username: { type: String, trim: true }
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model('User', userSchema);</pre></div>
+  <p><code>mongoose.model('User', ...)</code> 会让 Mongoose 自动使用 <code>users</code> 集合，符合题目。Mongoose 自己还会加一个 <code>_id</code>，不用管它，我们业务上用自定义的 <code>id</code>。</p>
+  <div class="ok"><strong>✅ 过关</strong>：文件保存，VS Code 没有红色语法错误。</div>
+</section>
+
+<section id="s5">
+  <h2><span class="step">5</span>写路由：routes/users.js（20 分钟）</h2>
+  <div class="warn"><strong>和老师的书例子最大的不同</strong>：老师用 <code>findById()</code> 查默认的 <code>_id</code>；本题要按业务字段 <code>id</code>（数字）查，所以全部换成 <code>findOne({ id })</code> / <code>findOneAndUpdate</code> / <code>findOneAndDelete</code>。另外题目的路径很特殊（<code>/newuser</code>、<code>/modify/:id</code>），不能照搬老师统一的 <code>/:id</code>。</div>
+
+  <div class="codebox"><div class="bar"><span>routes/users.js — 完整代码</span><button onclick="copyCode(this)">复制</button></div><pre>const express = require('express');
+const User = require('../models/User');
+
+const router = express.Router();
+
+// 把 :id 转成数字；非法值直接 400，避免 CastError
+function parseId(req, res, next) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: { message: 'id must be a number.' } });
+  }
+  req.userId = id;
+  next();
+}
+
+// Task 3-a: GET /api/users  取全部
+router.get('/', async (req, res, next) => {
+  try {
+    const users = await User.find().sort({ id: 1 });
+    res.json(users);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Task 3-b: GET /api/users/user/:id  取单个（题目里 repositories 是复制残留，就是取该用户）
+router.get('/user/:id', parseId, async (req, res, next) => {
+  try {
+    const user = await User.findOne({ id: req.userId });
+    if (!user) return res.status(404).json({ error: { message: 'User not found.' } });
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Task 5 (optional): GET /api/users/random
+// ★ 必须放在 /user/:id 之前，否则 'random' 会被当成 :id 吃掉
+router.get('/random', async (req, res, next) => {
+  try {
+    const count = await User.countDocuments();
+    if (count === 0) return res.status(404).json({ error: { message: 'No users yet.' } });
+    const skip = Math.floor(Math.random() * count);
+    const user = await User.findOne().skip(skip);
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Task 3-c: POST /api/users/newuser  新建
+router.post('/newuser', async (req, res, next) => {
+  try {
+    const { id, email, username } = req.body;
+    if (id === undefined || !email) {
+      return res.status(400).json({ error: { message: 'id and email are required.' } });
+    }
+    const user = await User.create({ id: Number(id), email, username });
+    res.status(201).json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Task 3-d: PUT /api/users/modify/:id  只改 username
+router.put('/modify/:id', parseId, async (req, res, next) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json({ error: { message: 'username is required.' } });
+    }
+    const user = await User.findOneAndUpdate(
+      { id: req.userId },
+      { username },
+      { new: true, runValidators: true }
+    );
+    if (!user) return res.status(404).json({ error: { message: 'User not found.' } });
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Task 3-e: DELETE /api/users/delete/:id
+// 题目原文写的是 /user/delete/:id（少了 api），server.js 里两个都挂了
+router.delete('/delete/:id', parseId, async (req, res, next) => {
+  try {
+    const user = await User.findOneAndDelete({ id: req.userId });
+    if (!user) return res.status(404).json({ error: { message: 'User not found.' } });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;</pre></div>
+  <div class="note"><strong>为什么每条路由都要 try/catch + next(err)？</strong> 这是老师 <code>quote-api-checkpoints/final/app.js</code> 的标准写法。异步路由里抛错 Express 5 虽然能自己接住，但显式 <code>next(err)</code> 更稳，而且统一走到最后的错误处理器，返回格式一致。</div>
+  <div class="ok"><strong>✅ 过关</strong>：五个端点 + random 都在，<code>router.get('/random')</code> 在 <code>router.get('/user/:id')</code> 前面。</div>
+</section>
+
+<section id="s6">
+  <h2><span class="step">6</span>写主文件：server.js（10 分钟）</h2>
+  <p>这一整段几乎就是老师 <code>book-store-api-checkpoints/final/server.js</code> 的原格式，只改了挂载路径、欢迎语，并<strong>额外补了 11000 重复键处理</strong>。</p>
+  <div class="codebox"><div class="bar"><span>server.js — 完整代码</span><button onclick="copyCode(this)">复制</button></div><pre>require('dotenv').config({ quiet: true });
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const userRoutes = require('./routes/users');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+app.get('/', (req, res) =&gt; {
+  res.json({ message: 'UserList API - Johnny, Douglas College' });
+});
+
+app.use('/api/users', userRoutes);
+app.use('/user', userRoutes);   // 覆盖题目写的 DELETE /user/delete/:id
+
+// 404：放在所有路由之后
+app.use((req, res, next) =&gt; {
+  const err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+
+// 统一错误处理器：四个参数，放最后
+app.use((err, req, res, next) =&gt; {
+  if (err.code === 11000) {
+    return res.status(400).json({ error: { message: 'Duplicate id: id must be unique.' } });
+  }
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ error: { message: err.message } });
+  }
+  res.status(err.status || 500).json({ error: { message: err.message } });
+});
+
+// 先连 MongoDB，成功后再监听端口
+async function start() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('Connected to MongoDB');
+    app.listen(port, () =&gt; {
+      console.log(`UserList API listening on http://localhost:${port}`);
+    });
+  } catch (err) {
+    console.error('Could not connect to MongoDB:', err.message);
+    process.exit(1);
+  }
+}
+
+start();</pre></div>
+  <div class="ok"><strong>✅ 过关</strong>：终端出现 <code>Connected to MongoDB</code> 和 <code>UserList API listening on http://localhost:3000</code>。</div>
+</section>
+
+<section id="s7">
+  <h2><span class="step">7</span>跑起来 + Postman 全端点测试（15 分钟）</h2>
+
+  <h3>7-1 启动</h3>
+  <div class="codebox"><div class="bar"><span>PowerShell（在项目根目录）</span><button onclick="copyCode(this)">复制</button></div><pre>npm start</pre></div>
+  <p>看到两行日志就成功。若报 <code>Could not connect to MongoDB</code>，先查第 8 节排错表。</p>
+
+  <h3>7-2 Postman 测试清单（按顺序做）</h3>
+  <table>
+    <tr><th>#</th><th>Method &amp; URL</th><th>Body (raw → JSON)</th><th>预期</th></tr>
+    <tr><td>1</td><td><code>GET http://localhost:3000/</code></td><td>—</td><td><strong>200</strong> 欢迎 JSON</td></tr>
+    <tr><td>2</td><td><code>GET /api/users</code></td><td>—</td><td><strong>200</strong> <code>[]</code>（空数组）</td></tr>
+    <tr><td>3</td><td><code>POST /api/users/newuser</code></td><td><code>{"id":1,"email":"johnny@douglascollege.ca","username":"johnny"}</code></td><td><strong>201</strong> 返回新用户</td></tr>
+    <tr><td>4</td><td><code>POST /api/users/newuser</code></td><td><code>{"id":2,"email":"a@b.com","username":"alex"}</code></td><td><strong>201</strong></td></tr>
+    <tr><td>5</td><td><code>GET /api/users</code></td><td>—</td><td><strong>200</strong> 2 笔，按 id 排序</td></tr>
+    <tr><td>6</td><td><code>GET /api/users/user/1</code></td><td>—</td><td><strong>200</strong> id=1 那笔</td></tr>
+    <tr><td>7</td><td><code>GET /api/users/random</code></td><td>—</td><td><strong>200</strong> 随机一笔</td></tr>
+    <tr><td>8</td><td><code>PUT /api/users/modify/1</code></td><td><code>{"username":"johnny-updated"}</code></td><td><strong>200</strong> username 已改</td></tr>
+    <tr><td>9</td><td><code>DELETE /user/delete/2</code></td><td>—</td><td><strong>204</strong> 无内容</td></tr>
+    <tr><td>10</td><td><code>GET /api/users</code></td><td>—</td><td><strong>200</strong> 只剩 1 笔</td></tr>
+  </table>
+
+  <h3>7-3 错误处理测试（Task 4，别漏！）</h3>
+  <table>
+    <tr><th>场景</th><th>请求</th><th>预期</th></tr>
+    <tr><td>找不到用户</td><td><code>GET /api/users/user/999</code></td><td><strong>404</strong> <code>User not found.</code></td></tr>
+    <tr><td>id 不是数字</td><td><code>GET /api/users/user/abc</code></td><td><strong>400</strong> <code>id must be a number.</code></td></tr>
+    <tr><td>缺 email</td><td><code>POST /api/users/newuser</code> body 只有 <code>{"id":3}</code></td><td><strong>400</strong> <code>id and email are required.</code></td></tr>
+    <tr><td>重复 id（unique）</td><td>再 POST 一次 <code>id:1</code></td><td><strong>400</strong> <code>Duplicate id...</code>（不是 500！）</td></tr>
+    <tr><td>PUT 没给 username</td><td><code>PUT /api/users/modify/1</code> body <code>{}</code></td><td><strong>400</strong></td></tr>
+    <tr><td>不存在的路由</td><td><code>GET /nope</code></td><td><strong>404</strong> <code>Not Found</code></td></tr>
+  </table>
+  <div class="note">Postman 操作：选方法 → 填 URL → <strong>Body</strong> 标签 → <strong>raw</strong> → 右侧下拉选 <strong>JSON</strong> → 粘贴 JSON → Send。看右下角 Status 码。</div>
+  <div class="ok"><strong>✅ 过关</strong>：上面 16 个测试全部符合预期，且服务器没有崩溃。</div>
+</section>
+
+<section id="s8">
+  <h2><span class="step">8</span>常见错误速查（卡住先看这里）</h2>
+  <table>
+    <tr><th>现象</th><th>原因 / 修法</th></tr>
+    <tr><td><code>Could not connect to MongoDB: Authentication failed</code></td><td>Atlas 用户名/密码错，或密码里的特殊字符没做 URL 编码；复制连接串时确认 USER/PASSWORD 已替换</td></tr>
+    <tr><td><code>querySrv ENOTFOUND</code> / 一直连不上</td><td>网络问题，或连接串的 CLUSTER 地址不对；确认 Atlas 集群状态是 Active</td></tr>
+    <tr><td><code>MongooseServerSelectionError</code>（部署后）</td><td>Atlas <strong>Network Access</strong> 没加 <code>0.0.0.0/0</code></td></tr>
+    <tr><td><code>require is not defined in ES module scope</code></td><td><code>package.json</code> 里误加了 <code>"type": "module"</code>，但代码用 <code>require</code> → 删掉那行</td></tr>
+    <tr><td><code>Cannot find module 'mongoose'</code></td><td>没装依赖 → 在项目根目录 <code>npm install</code></td></tr>
+    <tr><td>POST 返回 500 而不是 400</td><td>错误处理器没识别 11000；确认 <code>server.js</code> 里 <code>if (err.code === 11000)</code> 写在最前面</td></tr>
+    <tr><td><code>/api/users/random</code> 返回 400 "id must be a number"</td><td>random 路由写在了 <code>/user/:id</code> 后面，被 <code>:id</code> 吃掉 → 把它移到前面</td></tr>
+    <tr><td>GET 列表是 <code>[]</code>，但 Atlas 里看得到数据</td><td>连接串里的库名不是 <code>UserList</code>（连到了 test）→ 改 <code>.env</code> 里的 URI 并重开服务器</td></tr>
+    <tr><td>PUT 后 username 没变</td><td>漏了 <code>{ new: true }</code>，返回的是更新前的文档</td></tr>
+    <tr><td>DELETE 返回 404，但用 <code>/api/users/delete/1</code> 却成功</td><td>正常，两个路径都挂了；题目写的是 <code>/user/delete/:id</code>，用那个即可</td></tr>
+  </table>
+</section>
+
+<section id="s9">
+  <h2><span class="step">9</span>部署到 Render（15 分钟，Task 6）</h2>
+  <ol>
+    <li>在项目根目录 <code>npm init -y</code> 之后确认已有 <code>.gitignore</code>（含 <code>.env</code>、<code>node_modules/</code>）。<strong>千万别把 .env 推上 GitHub</strong>。</li>
+    <li>GitHub 新建一个仓库（建议 private），把项目推上去：
+      <div class="codebox"><div class="bar"><span>PowerShell</span><button onclick="copyCode(this)">复制</button></div><pre>git init
+git add .
+git commit -m "CSIS3380 UserList REST API - Johnny"
+git remote add origin https://github.com/你的账号/仓库名.git
+git branch -M main
+git push -u origin main</pre></div>
+    </li>
+    <li>登录 <code>render.com</code> → <strong>New</strong> → <strong>Web Service</strong> → 连接 GitHub 仓库。</li>
+    <li>填写（照抄教材附录 Page 30）：
+      <table>
+        <tr><th>字段</th><th>值</th></tr>
+        <tr><td>Runtime</td><td>Node</td></tr>
+        <tr><td>Build Command</td><td><code>npm install</code></td></tr>
+        <tr><td>Start Command</td><td><code>node server.js</code>（不要用 <code>npm start</code>，因为那是 <code>--watch</code>，只适合开发）</td></tr>
+        <tr><td>Instance Type</td><td>Free</td></tr>
+      </table>
+    </li>
+    <li>点开 <strong>Environment</strong> → <strong>Add Environment Variable</strong> → 加一条 <code>MONGODB_URI</code>，值就是你 <code>.env</code> 里那串（含 <code>/UserList</code>）。<code>PORT</code> 不用加，Render 会自动提供。</li>
+    <li><strong>Create Web Service</strong>，等 1–3 分钟出现 <code>Live</code>。打开它给的网址（形如 <code>https://xxx.onrender.com</code>），应看到欢迎 JSON。</li>
+    <li>用 Postman 把第 7 节的关键请求对部署地址再打一遍（例如 <code>GET https://xxx.onrender.com/api/users</code>）。免费实例冷启动要等几秒，属正常。</li>
+  </ol>
+  <div class="ok"><strong>✅ 过关</strong>：浏览器打开部署链接能看到 <code>{"message":"UserList API - Johnny, Douglas College"}</code>，且 Postman 能对着它完成一次 POST。</div>
+</section>
+
+<section id="s10">
+  <h2><span class="step">10</span>提交 Blackboard（1 mark）</h2>
+  <p>提交内容 = <strong>代码</strong> + <strong>部署链接</strong>。建议打包项目文件夹（<strong>排除</strong> <code>node_modules/</code> 和 <code>.env</code>，但<strong>包含</strong> <code>.env.example</code>）为 zip。</p>
+  <ul class="check">
+    <li>项目代码 zip（含 <code>server.js</code>、<code>models/User.js</code>、<code>routes/users.js</code>、<code>package.json</code>、<code>.env.example</code>、<code>.gitignore</code>）</li>
+    <li>Render 部署链接：<code>https://____________.onrender.com</code></li>
+    <li>可选：Postman 截图若干（16 个测试里挑 3–4 张关键的：201 创建、404、400 重复 id、204 删除）</li>
+    <li>可选：Atlas 控制台里 <code>UserList.users</code> 集合的截图</li>
+    <li>在 Blackboard 提交框里写一句：姓名 Johnny / 学校 Douglas College / 课程 CSIS 3380 / GitHub 仓库地址</li>
+  </ul>
+  <div class="note">本机代码最终目录见下面附录。老师评分看的是「连得上 Atlas + CRUD 都能跑 + 有错误处理 + 有部署链接」，这四样齐了就是满分。</div>
+</section>
+
+<section id="appendix">
+  <h2>附录：最终目录树</h2>
+  <div class="tree">CSIS3380 Module8 Simple Rest API Exercise Lab/
+├── Lab教程-REST-API-MongoDB.html   ← 你正在看的这份
+└── userlist-api-johnny/
+    ├── package.json
+    ├── package-lock.json
+    ├── server.js
+    ├── .env                  (本地私有，不要上传)
+    ├── .env.example          (交作业用)
+    ├── .gitignore
+    ├── models/
+    │   └── User.js
+    └── routes/
+        └── users.js</div>
+
+  <h3>已实现端点总表</h3>
+  <table>
+    <tr><th>Method</th><th>路径</th><th>任务</th></tr>
+    <tr><td>GET</td><td><code>/</code></td><td>健康检查（额外）</td></tr>
+    <tr><td>GET</td><td><code>/api/users</code></td><td>Task 3：取全部用户</td></tr>
+    <tr><td>GET</td><td><code>/api/users/user/:id</code></td><td>Task 3：按 id 取单个</td></tr>
+    <tr><td>POST</td><td><code>/api/users/newuser</code></td><td>Task 3：新建用户</td></tr>
+    <tr><td>PUT</td><td><code>/api/users/modify/:id</code></td><td>Task 3：改 username</td></tr>
+    <tr><td>DELETE</td><td><code>/user/delete/:id</code></td><td>Task 3：删除（题目原路径）</td></tr>
+    <tr><td>DELETE</td><td><code>/api/users/delete/:id</code></td><td>同上，兼容路径（额外）</td></tr>
+    <tr><td>GET</td><td><code>/api/users/random</code></td><td>Task 5：随机用户（加分）</td></tr>
+  </table>
+
+  <h3>教材对照（想深入时看）</h3>
+  <ul>
+    <li><code>book-store-api-checkpoints/final/</code> —— 本教程的骨架来源：连接、Schema、Router、404/错误处理、先连后听</li>
+    <li><code>quote-api-checkpoints/final/app.js</code> —— 请求体 400 校验、try/catch、random 路由顺序、统一错误处理</li>
+    <li><code>MongoDB-and-Mongoose-Step-by-Step.pdf</code> —— Step 2 Atlas、Step 4 .env、Step 5 连接、Step 6 Schema、Step 8–11 CRUD、Step 12 错误、附录 Render</li>
+    <li><code>Build-a-REST-API-with-Express.pdf</code> —— Step 5/6/10/11/12/13/14/15/17：读取、单条、创建、校验、try/catch、更新、删除、随机、统一错误处理</li>
+    <li>注意：教材例子用的是 <code>findById()</code> + 默认 <code>_id</code>，本题必须换成 <code>findOne({ id })</code>；教材字段是 <code>title/author/pages</code>，本题是 <code>id/email/username</code>。</li>
+  </ul>
+</section>
+
+</div>
+
+<footer>CSIS 3380 · Module 8 · REST API on MongoDB — prepared for Johnny · Douglas College</footer>
+
+<script>
+function copyCode(btn) {
+  var pre = btn.parentElement.nextElementSibling;
+  var text = pre.innerText;
+  navigator.clipboard.writeText(text).then(function () {
+    var old = btn.textContent;
+    btn.textContent = '已复制 ✓';
+    setTimeout(function () { btn.textContent = old; }, 1200);
+  });
+}
+</script>
+</body>
+</html>
