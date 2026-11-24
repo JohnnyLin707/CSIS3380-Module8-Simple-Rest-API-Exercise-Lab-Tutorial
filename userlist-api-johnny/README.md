@@ -33,4 +33,4 @@ Errors return JSON with `{ "error": { "message": "..." } }` and status 400/404/5
 - Start Command: `node server.js`
 - Environment: `MONGODB_URI` (Atlas connection string). `PORT` is provided by Render.
 
-See `../Lab教程-REST-API-MongoDB.html` for the full step-by-step tutorial and Postman test plan.
+See `../index.html` for the full step-by-step tutorial and Postman test plan.
