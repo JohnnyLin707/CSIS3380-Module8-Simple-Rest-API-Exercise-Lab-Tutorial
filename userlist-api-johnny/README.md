@@ -25,7 +25,7 @@ npm start
 | PUT | `/api/users/modify/:id` | Update `username` |
 | DELETE | `/user/delete/:id` | Delete user (also available at `/api/users/delete/:id`) |
 
-Errors return JSON with `{ "error": { "message": "..." } }` and status 400/404/500.
+Route errors (400/404) return `{ "message": "..." }`; errors passed to `next(err)` return `{ "error": { "message": "..." } }` from the final handler. PUT and DELETE return 204 No Content on success.
 
 ## Deploy (Render)
 
