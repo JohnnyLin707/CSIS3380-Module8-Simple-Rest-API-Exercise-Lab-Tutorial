@@ -48,15 +48,15 @@
   <h1>REST API on MongoDB — Exercise Lab 通关教程</h1>
   <p><span class="badge">CSIS 3380</span><span class="badge">Douglas College</span><span class="badge">Johnny</span><span class="badge">Module 8</span></p>
   <p>目标：用 Express + Mongoose 连 MongoDB Atlas，建 <code>UserList</code> 数据库的 <code>users</code> 集合，完成 CRUD + 错误处理 + 随机用户 + 部署，提交拿满 1 分。</p>
-  <p>预计耗时：60–90 分钟（含 Atlas 注册与 Render 部署）。每一阶段都有「✅ 过关检查」，没过先别往下走。</p>
+  <p>预计耗时：75–110 分钟（其中第 0、1 节已细化到每一步点击，零基础也能照着做）。每一阶段都有「✅ 过关检查」，没过先别往下走。</p>
 </header>
 
 <div class="wrap">
 
 <div class="toc">
   <h2>目录（点标题直接跳）</h2>
-  <a href="#s0">0 准备工具</a>
-  <a href="#s1">1 建 Atlas 数据库</a>
+  <a href="#s0">0 准备工具（细化）</a>
+  <a href="#s1">1 建 Atlas 数据库（细化）</a>
   <a href="#s2">2 建项目 + 装依赖</a>
   <a href="#s3">3 .env 与 .gitignore</a>
   <a href="#s4">4 Model</a>
@@ -74,40 +74,157 @@
 </div>
 
 <section id="s0">
-  <h2><span class="step">0</span>准备工具（5 分钟）</h2>
+  <h2><span class="step">0</span>准备工具与环境检查（12 分钟，零基础逐步版）</h2>
+  <p>这次 Lab 同时用到<strong>本机代码 + 云端数据库 + 云端部署</strong>三样东西，先把账号和软件一次备齐，后面才不会卡住。建议开一个记事本，边做边记下 4 个信息：<strong>Atlas 用户名、Atlas 密码、集群地址、最终连接串</strong>（第 1 节会反复用到）。</p>
+
+  <h3>0-1 必装软件（逐个检查版本号）</h3>
+  <p>打开 PowerShell（<code>Win + R</code> → 输入 <code>powershell</code> → Enter），逐条输入下面命令：</p>
+  <div class="codebox"><div class="bar"><span>PowerShell — 检查命令</span><button onclick="copyCode(this)">复制</button></div><pre>node -v
+npm -v
+code --version
+git --version</pre></div>
   <table>
-    <tr><th>要装/要注册</th><th>检查方式</th><th>备注</th></tr>
-    <tr><td>Node.js 18+ 与 npm</td><td><code>node -v</code> / <code>npm -v</code></td><td>建议 Node 20 或 22 LTS</td></tr>
-    <tr><td>VS Code</td><td><code>code --version</code></td><td>装个 REST Client 或 Postman 桌面版</td></tr>
-    <tr><td>MongoDB Atlas 免费账号</td><td>能登录 cloud.mongodb.com</td><td>免费 M0 集群足够</td></tr>
-    <tr><td>Postman（或 Thunder Client）</td><td>能发 GET/POST 请求</td><td>也可以用 curl，下面给 Postman 步骤</td></tr>
-    <tr><td>Render 账号</td><td>能登录 render.com</td><td>用 GitHub 登录最省事</td></tr>
+    <tr><th>软件</th><th>命令</th><th>预期输出</th><th>没有 / 版本太低怎么办</th></tr>
+    <tr><td><strong>Node.js</strong>（运行 Express 的核心）</td><td><code>node -v</code></td><td><code>v18.x</code> / <code>v20.x</code> / <code>v22.x</code>（推荐 20 LTS）</td><td>去 <code>https://nodejs.org</code> 下载 <strong>LTS</strong> 版，一路 Next 装完，<strong>关掉再重开 PowerShell</strong>（PATH 才会更新）</td></tr>
+    <tr><td><strong>npm</strong>（装依赖）</td><td><code>npm -v</code></td><td><code>10.x</code> 以上（随 Node 一起装）</td><td>装了 Node 就有；若版本很旧，重装 Node LTS 即可</td></tr>
+    <tr><td><strong>VS Code</strong>（写代码）</td><td><code>code --version</code></td><td>输出三行版本号</td><td>去 <code>https://code.visualstudio.com</code> 下载安装；安装时勾选「Add to PATH」</td></tr>
+    <tr><td><strong>Git</strong>（第 9 节推 GitHub 用）</td><td><code>git --version</code></td><td><code>git version 2.x</code></td><td>去 <code>https://git-scm.com/download/win</code> 下载安装，全部默认下一步</td></tr>
+    <tr><td><strong>浏览器</strong>（看结果）</td><td>—</td><td>Chrome 或 Edge 最新版</td><td>Windows 自带 Edge 就够用</td></tr>
   </table>
-  <div class="ok"><strong>✅ 过关</strong>：上面五个都能打开/有版本号。</div>
+  <div class="note"><strong>你的环境已确认可用</strong>：本机是 Node <code>v24.15.0</code>、npm <code>11.x</code>、Git <code>2.49</code>，全部满足要求，可以直接跳到账号部分，不用重装任何东西。</div>
+
+  <h3>0-2 必注册账号（4 个，都免费）</h3>
+  <table>
+    <tr><th>账号</th><th>网址</th><th>在 Lab 里干嘛用</th><th>注意</th></tr>
+    <tr><td><strong>MongoDB Atlas</strong></td><td><code>https://cloud.mongodb.com</code></td><td>托管你的 MongoDB 数据库（Task 1）</td><td>注册后要去邮箱点验证链接；免费 M0 集群不需要信用卡</td></tr>
+    <tr><td><strong>GitHub</strong></td><td><code>https://github.com</code></td><td>存代码，Render 从这里拉取（Task 6/7）</td><td>你已有账号 <code>JohnnyLin707</code>，直接用</td></tr>
+    <tr><td><strong>Render</strong></td><td><code>https://render.com</code></td><td>把 API 部署到公网，拿作业链接（Task 6）</td><td>选 <strong>Sign up with GitHub</strong> 最省事，不用再记一组密码</td></tr>
+    <tr><td><strong>Postman</strong></td><td><code>https://www.postman.com/downloads/</code></td><td>发 GET/POST/PUT/DELETE 测试 API（Task 3/4）</td><td>桌面版免注册也能用；不想装可用 VS Code 的 Thunder Client 扩展</td></tr>
+  </table>
+  <div class="warn"><strong>邮箱建议</strong>：Atlas 验证邮件有时会被学校邮箱挡掉。注册 Atlas 用 Gmail / Outlook 之类个人邮箱最稳。Render 用 GitHub 登录，就不会再多一组账号密码。</div>
+
+  <h3>0-3 VS Code 建议装的扩展（可选但省事）</h3>
+  <ol>
+    <li>打开 VS Code → 左侧方块图标（<strong>Extensions</strong>，快捷键 <code>Ctrl+Shift+X</code>）→ 搜索框输入名字 → 点 <strong>Install</strong>。</li>
+    <li>推荐：
+      <ul>
+        <li><strong>REST Client</strong>（作者 humao）—— 新建 <code>test.http</code> 写请求直接点 Send，不用开 Postman。</li>
+        <li><strong>Thunder Client</strong> —— Postman 的轻量替代，直接在 VS Code 侧边栏发请求。</li>
+        <li><strong>ESLint</strong> / <strong>Prettier</strong> —— 自动格式化代码，纯可选。</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h3>0-4 Postman 第一次使用怎么发 JSON 请求（先混个脸熟）</h3>
+  <ol>
+    <li>打开 Postman → 点 <strong>+</strong> 新建请求 → 方法下拉选 <code>POST</code> → 地址栏填 <code>http://localhost:3000/api/users/newuser</code>。</li>
+    <li>点 <strong>Body</strong> 标签 → 选 <strong>raw</strong> → 右边出现格式下拉，选 <strong>JSON</strong> → 在文本框输入 <code>{"id":1,"email":"test@example.com","username":"johnny"}</code>。</li>
+    <li>点 <strong>Send</strong>，下方看 <strong>Status</strong>（如 <code>201 Created</code>）和响应内容。第 7 节会有完整的 16 条测试清单。</li>
+  </ol>
+  <div class="note">Postman 的云同步需要账号，但<strong>本地测试完全不用登录</strong>。如果不想装软件，VS Code 装 REST Client 后写 <code>POST http://localhost:3000/...</code> + JSON 也能达到同样效果。</div>
+
+  <h3>0-5 Windows 路径的坑（你大概率会遇到）</h3>
+  <div class="warn">
+    你的作业路径里有<strong>空格</strong>（<code>3380-Full Stack Development...</code>）和<strong>撇号</strong>（<code>Johnny's Desktop</code>）。在 PowerShell 里 <code>cd</code> 到这种路径时<strong>一定要用双引号包住整条路径</strong>，否则会报「找不到位置」。本教程所有 <code>cd</code> 命令都已帮你加好引号，直接复制即可。<br>
+    另外项目放在 OneDrive 同步目录下，<code>npm install</code> 时若特别慢，先等 OneDrive 同步完成再跑，或暂时右键 OneDrive → 暂停同步。
+  </div>
+
+  <div class="ok"><strong>✅ 过关</strong>：4 条版本命令都有输出；4 个账号都能登录；记事本里已空出 4 行准备记 Atlas 信息。可以进入第 1 节。</div>
 </section>
 
 <section id="s1">
-  <h2><span class="step">1</span>MongoDB Atlas：建集群 + 建数据库 + 拿连接串（15 分钟）</h2>
+  <h2><span class="step">1</span>MongoDB Atlas：建集群 → 建用户 → 放行 IP → 拿连接串（25 分钟，逐步点击版）</h2>
+  <div class="note"><strong>先分清层级，别搞混名字</strong>：Organization（组织）→ Project（项目）→ Cluster / Deployment（集群，如 <code>Cluster0</code>）→ Database（数据库，本题必须是 <code>UserList</code>）→ Collection（集合，本题 <code>users</code>）→ Document（文档，一条用户）。<strong>集群名 ≠ 数据库名</strong>，考试/Lab 要求的是后者。</div>
 
-  <h3>1-1 建免费集群</h3>
+  <h3>1-1 注册 Atlas 并验证邮箱</h3>
   <ol>
-    <li>登录 <code>https://cloud.mongodb.com</code> → <strong>Project</strong> → <strong>Create a Project</strong>，名字随意（如 <code>CSIS3380</code>）。</li>
-    <li>点 <strong>Create a Database Deployments</strong> → 选 <strong>M0 Free</strong> → Provider 随便选（AWS 最稳）→ Region 选离你近的 → 集群名随意 → <strong>Create Deployment</strong>。</li>
-    <li>创建用户名密码（<strong>记住它们</strong>，连接串要用），点 <strong>Create Database User</strong>。</li>
+    <li>浏览器打开 <code>https://cloud.mongodb.com</code> → 点 <strong>Sign Up</strong>（或 <strong>Register</strong>）。</li>
+    <li>可以用 Google 账号一键注册，或用邮箱 + 密码。用邮箱的话，去收件箱（看一眼垃圾邮件夹）点<strong>验证链接</strong>。</li>
+    <li>登录后如果弹出欢迎向导，随便选一个用途（如 <em>Learning / Personal</em>），跳过付费推荐。</li>
+  </ol>
+  <div class="ok"><strong>检查</strong>：能看到 Atlas 主界面（左侧有 <em>Database / Security</em> 菜单），且右上角显示你的邮箱。</div>
+
+  <h3>1-2 新建 Project（项目）</h3>
+  <ol>
+    <li>左上角有一个<strong>项目下拉框</strong>（默认可能叫 <code>Project 0</code>）→ 点它 → 选 <strong>New Project</strong>。</li>
+    <li>Project Name 填 <code>CSIS3380-Module8</code> → 下面 <em>Add members</em> 直接跳过 → 点 <strong>Create Project</strong>。</li>
+    <li>如果系统弹出创建集群的引导，先别急，下一小节统一做。</li>
   </ol>
 
-  <h3>1-2 允许公网访问（部署必做，本地也建议先做）</h3>
-  <p>左侧 <strong>Network Access</strong> → <strong>Add IP Address</strong> → 选 <strong>Allow Access from Anywhere</strong>（即 <code>0.0.0.0/0</code>）→ Confirm。免费版必须这样，Render 的 IP 不固定。</p>
+  <h3>1-3 创建 M0 免费集群（约 1–3 分钟）</h3>
+  <ol>
+    <li>在项目页面点 <strong>Create a Database Deployment</strong>（或左侧 <strong>Database</strong> → <strong>Create</strong>）。</li>
+    <li>选 <strong>M0 Free</strong>（免费档，够跑 13 条测试）→ 点 <strong>Create</strong>。</li>
+    <li>Cloud Provider：选 <strong>AWS</strong> 最稳；Region 选离你近的（如 <code>Asia Pacific (Singapore)</code> 或 <code>US East (N. Virginia)</code>），<strong>选好之后不能改</strong>，但对本 Lab 没影响。</li>
+    <li>Cluster Name 保持默认 <code>Cluster0</code> 即可，点 <strong>Create Deployment</strong>。</li>
+    <li>等 1–3 分钟，状态从 <em>Creating</em> 变成 <strong>Active / 绿色</strong>。这期间可以继续下一步。</li>
+  </ol>
+  <div class="warn"><strong>免费额度限制</strong>：一个 Atlas 账号只能有 <strong>1 个 M0 集群</strong>。如果提示 <em>M0 free cluster limit reached</em>，说明你之前建过：要么把旧集群删掉（Database → 旧集群 → Delete），要么换一个 Atlas 账号。集群长期不用可能被暂停，看到 <em>Paused</em> 点 <strong>Resume</strong> 即可。</div>
 
-  <h3>1-3 让连接串里的数据库名变成 UserList</h3>
-  <p>点 <strong>Connect</strong> → <strong>Drivers</strong> → Node.js → 复制连接串，形如：</p>
-  <div class="codebox"><div class="bar"><span>连接串模板（先在记事本里存着）</span><button onclick="copyCode(this)">复制</button></div><pre>mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/UserList?retryWrites=true&amp;w=majority</pre></div>
-  <div class="warn"><strong>关键点</strong>：<code>mongodb.net/</code> 后面必须写 <code>UserList</code>，这就是题目要求的数据库名。如果那里是 <code>test</code> 或空的，Mongoose 会把数据写进错库。密码里有特殊字符时要做 URL 编码（例如 <code>@</code> 写成 <code>%40</code>）。</div>
+  <h3>1-4 创建数据库用户（连接串里的 USER 和 PASSWORD）</h3>
+  <ol>
+    <li>左侧 <strong>Security</strong> → <strong>Database Access</strong> → <strong>Add New Database User</strong>。</li>
+    <li>Authentication Method 选 <strong>Password</strong>。</li>
+    <li>Username 填 <code>johnny3380</code>（自己记清楚，大小写敏感）。</li>
+    <li>Password：可以直接用 <strong>Auto-generate</strong> 生成随机密码再点 <strong>Copy</strong>，或自己设一个。<strong>强烈建议只用英文字母和数字</strong>，避免特殊字符带来的 URL 编码麻烦（见 1-6）。</li>
+    <li>Database User Privileges：选 <strong>Read and write to any database</strong>（读写任意库，Lab 最省事；想更严格可以选 <em>Custom Role</em> 只给 <code>UserList</code> 权限）。</li>
+    <li>点 <strong>Add User</strong>。立刻把用户名密码记到记事本——连接串要用，忘了只能改密码重来。</li>
+  </ol>
 
-  <h3>1-4 建 users 集合（可跳过）</h3>
-  <p>其实不用手动建：Django/Express 里第一次 <code>User.create()</code> 时，Mongoose 会自动在 <code>UserList</code> 下建 <code>users</code> 集合（<code>model('User')</code> 复数化就是 <code>users</code>）。想先建也行：Atlas → <strong>Browse Collections</strong> → <strong>Create Collection</strong>，库名 <code>UserList</code>，集合名 <code>users</code>。</p>
+  <h3>1-5 放行公网访问 Network Access（部署必做）</h3>
+  <ol>
+    <li>左侧 <strong>Security</strong> → <strong>Network Access</strong> → <strong>Add IP Address</strong>。</li>
+    <li>先点 <strong>Add My Current IP Address</strong>（把你现在的 IP 加进去，本地开发更规范）。</li>
+    <li>再点一次 <strong>Add IP Address</strong> → 这次选 <strong>Allow Access from Anywhere</strong>（会自动填 <code>0.0.0.0/0</code>）→ Comment 填 <code>render</code> → <strong>Confirm</strong>。</li>
+    <li>等列表里两条记录的状态都变成 <strong>Active</strong>。</li>
+  </ol>
+  <div class="warn"><strong>为什么必须加 0.0.0.0/0</strong>：Render 免费实例的出口 IP 不固定，不给它开公网白名单，部署后的服务器会报 <code>MongooseServerSelectionError</code>，而本地却能连上——这个“本地行、线上不行”的坑非常常见。Lab 作业这样设置即可；真实项目应改成只放行固定 IP。</div>
 
-  <div class="ok"><strong>✅ 过关</strong>：你手上有一段完整的 <code>mongodb+srv://...</code> 连接串，且其中包含 <code>/UserList</code>。</div>
+  <h3>1-6 拿连接串，并把数据库名改成 UserList（关键一步）</h3>
+  <ol>
+    <li>左侧 <strong>Database</strong> → 点你的集群（如 <code>Cluster0</code>）→ 右上 <strong>Connect</strong>。</li>
+    <li>弹窗里选 <strong>Drivers</strong> → 选 <strong>Node.js</strong> → Driver Version 选 <code>6.0 or later</code> → 点 <strong>Copy</strong> 复制连接串。</li>
+    <li>复制出来的东西长这样（先看懂每一段再改）：</li>
+  </ol>
+  <div class="codebox"><div class="bar"><span>Atlas 给你的原始串（示意）</span><button onclick="copyCode(this)">复制</button></div><pre>mongodb+srv://johnny3380:YOUR_PASSWORD@cluster0.abcde.mongodb.net/?retryWrites=true&amp;w=majority</pre></div>
+  <table>
+    <tr><th>片段</th><th>含义</th><th>你要做的</th></tr>
+    <tr><td><code>mongodb+srv://</code></td><td>协议头，表示连 Atlas 集群</td><td>保留</td></tr>
+    <tr><td><code>johnny3380</code></td><td>1-4 建的用户名</td><td>换成你自己的</td></tr>
+    <tr><td><code>YOUR_PASSWORD</code></td><td>1-4 的密码</td><td>换成你自己的；有特殊字符要编码（见下表）</td></tr>
+    <tr><td><code>cluster0.abcde.mongodb.net</code></td><td>集群地址</td><td>用 Atlas 给你的，别手打</td></tr>
+    <tr><td><code>mongodb.net/后面</code></td><td><strong>数据库名</strong></td><td><strong>插入 <code>UserList</code></strong>！原始串这里是空的（<code>net/?retry</code>）</td></tr>
+    <tr><td><code>?retryWrites=true&amp;w=majority</code></td><td>写入参数</td><td>保留，<code>&amp;</code> 是参数分隔符</td></tr>
+  </table>
+  <p>改完后的最终版（存进记事本，第 3 节要粘到 <code>.env</code>）：</p>
+  <div class="codebox"><div class="bar"><span>最终连接串模板</span><button onclick="copyCode(this)">复制</button></div><pre>mongodb+srv://johnny3380:YOUR_PASSWORD@cluster0.abcde.mongodb.net/UserList?retryWrites=true&amp;w=majority</pre></div>
+  <div class="warn">
+    <strong>两个必查点</strong><br>
+    ① <code>mongodb.net/</code> 后面<strong>必须</strong>是 <code>UserList</code>。如果留空或写成 <code>test</code>，Mongoose 会把数据写进别的库，你在 Atlas 里找不到 <code>UserList</code>，Postman 也一直返回空数组。<br>
+    ② 密码里有特殊字符时要做 URL 编码：<code>@</code> → <code>%40</code>，<code>:</code> → <code>%3A</code>，<code>/</code> → <code>%2F</code>，<code>#</code> → <code>%23</code>，<code>?</code> → <code>%3F</code>。最省事的办法就是 1-4 里说的——设密码时只用字母数字。
+  </div>
+
+  <h3>1-7 手动建 UserList / users（可选，但方便核对）</h3>
+  <p>其实<strong>不用手动建</strong>：第一次 <code>User.create()</code> 时，Mongoose 会自动在 <code>UserList</code> 下建 <code>users</code> 集合（<code>mongoose.model('User',...)</code> 复数化就是 <code>users</code>）。但提前建好，等你 POST 完可以直接去 Atlas 看到数据，很有成就感：</p>
+  <ol>
+    <li>左侧 <strong>Database</strong> → <strong>Browse Collections</strong> → 如果你的项目里还没有任何库，点 <strong>Create Database</strong>。</li>
+    <li>Database Name 填 <code>UserList</code>，Collection Name 填 <code>users</code> → <strong>Create</strong>。</li>
+    <li>如果 <code>UserList</code> 已存在，点开它 → <strong>Create Collection</strong> → 名字填 <code>users</code> → <strong>Create</strong>。</li>
+    <li>第 7 节 POST 成功后回来刷新，就能看到一条条文档（带 <code>_id</code>、<code>id</code>、<code>email</code>、<code>username</code>）。</li>
+  </ol>
+
+  <h3>1-8 Atlas 专属排错（连不上时对照这里）</h3>
+  <table>
+    <tr><th>现象</th><th>原因 / 修法</th></tr>
+    <tr><td><code>Authentication failed</code></td><td>用户名/密码错，或密码特殊字符没 URL 编码；确认连接串里不是字面量 <code>YOUR_PASSWORD</code></td></tr>
+    <tr><td><code>MongooseServerSelectionError: connection timed out</code></td><td>Network Access 没加 <code>0.0.0.0/0</code>（本地则检查是否加了当前 IP）；或公司/校园网封了 27017 出站</td></tr>
+    <tr><td><code>querySrv ENOTFOUND ...mongodb.net</code></td><td>集群地址复制错了；回 Atlas 的 Connect 弹窗重新 Copy 一次</td></tr>
+    <tr><td>本地连得上、Render 连不上</td><td>99% 是 Network Access 少了 <code>0.0.0.0/0</code>；见 1-5</td></tr>
+    <tr><td>POST 成功但 Atlas 里看不到 <code>UserList</code></td><td>连接串里 <code>mongodb.net/</code> 后面不是 <code>UserList</code>，数据写进了 <code>test</code>；改 <code>.env</code> 后重启服务器</td></tr>
+    <tr><td>集群显示 <em>Paused</em></td><td>免费集群长期不用会暂停；点 <strong>Resume</strong> 等 1 分钟</td></tr>
+  </table>
+
+  <div class="ok"><strong>✅ 过关清单</strong>：① Atlas 集群状态 Active；② 数据库用户已建且用户名密码已记下；③ Network Access 里有 <code>0.0.0.0/0</code> 且 Active；④ 记事本里有一段完整连接串，形如 <code>mongodb+srv://...</code> 且含 <code>/UserList</code>。四样齐了，进入第 2 节写代码。</div>
 </section>
 
 <section id="s2">
