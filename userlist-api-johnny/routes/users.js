@@ -23,23 +23,10 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// Send a GET request to /api/users/user/:id to READ (view) one user
-router.get('/user/:id', parseId, async (req, res, next) => {
-  try {
-    const user = await User.findOne({ id: req.userId });
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404).json({ message: 'User not found.' });
-    }
-  } catch (err) {
-    next(err);
-  }
-});
-
 // Send a GET request to /api/users/random to READ (view) a random user
-// It must come BEFORE /api/users/user/:id, or :id would catch the word 'random'
-router.get('/random', async (req, res, next) => {
+// In the Quote API this had to come before /:id; here the single-user path
+// is /user/:id, so there is no clash, but we keep the order as a good habit.
+async function getRandomUser(req, res, next) {
   try {
     const count = await User.countDocuments();
     if (count === 0) {
@@ -48,6 +35,21 @@ router.get('/random', async (req, res, next) => {
       const skip = Math.floor(Math.random() * count);
       const user = await User.findOne().skip(skip);
       res.json(user);
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+router.get('/random', getRandomUser);
+
+// Send a GET request to /api/users/user/:id to READ (view) one user
+router.get('/user/:id', parseId, async (req, res, next) => {
+  try {
+    const user = await User.findOne({ id: req.userId });
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: 'User not found.' });
     }
   } catch (err) {
     next(err);
@@ -73,21 +75,18 @@ router.post('/newuser', async (req, res, next) => {
 });
 
 // Send a PUT request to /api/users/modify/:id to UPDATE (edit) a user's username
+// MongoDB tutorial Step 10: return 200 with the updated document
 router.put('/modify/:id', parseId, async (req, res, next) => {
   try {
-    const user = await User.findOne({ id: req.userId });
+    const user = await User.findOneAndUpdate(
+      { id: req.userId },
+      { username: req.body.username },
+      { returnDocument: 'after', runValidators: true }
+    );
     if (!user) {
-      res.status(404).json({ message: 'User not found.' });
-    } else if (!req.body.username) {
-      res.status(400).json({ message: 'username is required.' });
-    } else {
-      await User.findOneAndUpdate(
-        { id: req.userId },
-        { username: req.body.username },
-        { runValidators: true }
-      );
-      res.status(204).end();
+      return res.status(404).json({ message: 'User not found.' });
     }
+    res.json(user);
   } catch (err) {
     next(err);
   }
@@ -96,16 +95,15 @@ router.put('/modify/:id', parseId, async (req, res, next) => {
 // Send a DELETE request to /api/users/delete/:id to DELETE a user
 router.delete('/delete/:id', parseId, async (req, res, next) => {
   try {
-    const user = await User.findOne({ id: req.userId });
-    if (user) {
-      await User.findOneAndDelete({ id: req.userId });
-      res.status(204).end();
-    } else {
-      res.status(404).json({ message: 'User not found.' });
+    const user = await User.findOneAndDelete({ id: req.userId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
     }
+    res.status(204).end();
   } catch (err) {
     next(err);
   }
 });
 
 module.exports = router;
+module.exports.getRandomUser = getRandomUser;

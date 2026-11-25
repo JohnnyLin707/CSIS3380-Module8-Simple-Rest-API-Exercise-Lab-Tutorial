@@ -20,12 +20,13 @@ npm start
 | GET | `/` | Health check |
 | GET | `/api/users` | List all users |
 | GET | `/api/users/user/:id` | Get one user by numeric `id` |
-| GET | `/api/users/random` | Get a random user |
+| GET | `/api/getrandomuser` | Get a random user (path from the lab wording) |
+| GET | `/api/users/random` | Same, textbook-style path |
 | POST | `/api/users/newuser` | Create user (`id`, `email` required) |
-| PUT | `/api/users/modify/:id` | Update `username` |
+| PUT | `/api/users/modify/:id` | Update `username`, returns 200 + updated user |
 | DELETE | `/user/delete/:id` | Delete user (also available at `/api/users/delete/:id`) |
 
-Route errors (400/404) return `{ "message": "..." }`; errors passed to `next(err)` return `{ "error": { "message": "..." } }` from the final handler. PUT and DELETE return 204 No Content on success.
+Route errors (400/404) return `{ "message": "..." }`; errors passed to `next(err)` return `{ "error": { "message": "..." } }` from the final handler. PUT returns 200 with the updated document; DELETE returns 204 No Content.
 
 ## Deploy (Render)
 

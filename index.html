@@ -49,6 +49,7 @@
   <p><span class="badge">CSIS 3380</span><span class="badge">Douglas College</span><span class="badge">Johnny</span><span class="badge">Module 8</span></p>
   <p>目标：用 Express + Mongoose 连 MongoDB Atlas，建 <code>UserList</code> 数据库的 <code>users</code> 集合，完成 CRUD + 错误处理 + 随机用户 + 部署，提交拿满 1 分。</p>
   <p>预计耗时：75–110 分钟（其中第 0、1 节已细化到每一步点击，零基础也能照着做）。每一阶段都有「✅ 过关检查」，没过先别往下走。</p>
+  <p><strong>教材依据</strong>：主教材 <code>MongoDB-and-Mongoose-Step-by-Step.pdf</code>（Atlas / .env / Schema / CRUD / 错误 / Render）；辅助 <code>Build-a-REST-API-with-Express.pdf</code>（请求体校验、try/catch、random、统一错误处理）。下文 Step 号会标注出自哪一本。</p>
 </header>
 
 <div class="wrap">
@@ -70,7 +71,7 @@
 </div>
 
 <div class="note">
-  <strong>为什么要照着老师的代码格式写？</strong> Module 8 的 <code>book-store-api-checkpoints/final</code> 就是这份 Lab 的“标准骨架”：CommonJS <code>require</code>、<code>dotenv</code>、先连 Mongo 再 <code>app.listen</code>、Router 分文件、四参数错误处理器。下面每一步都沿用它的格式，只把业务字段从书换成用户。
+  <strong>为什么要照着老师的代码格式写？</strong> Module 8 的 <code>book-store-api-checkpoints/final</code> 是 <code>MongoDB-and-Mongoose-Step-by-Step.pdf</code> 的最终代码，也是这份 Lab 的“标准骨架”：CommonJS <code>require</code>、<code>dotenv</code>、先连 Mongo 再 <code>app.listen</code>、Router 分文件、四参数错误处理器。下面每一步都沿用它的格式，只把业务字段从书换成用户。
 </div>
 
 <section id="s0">
@@ -119,7 +120,7 @@ git --version</pre></div>
   <ol>
     <li>打开 Postman → 点 <strong>+</strong> 新建请求 → 方法下拉选 <code>POST</code> → 地址栏填 <code>http://localhost:3000/api/users/newuser</code>。</li>
     <li>点 <strong>Body</strong> 标签 → 选 <strong>raw</strong> → 右边出现格式下拉，选 <strong>JSON</strong> → 在文本框输入 <code>{"id":1,"email":"test@example.com","username":"johnny"}</code>。</li>
-    <li>点 <strong>Send</strong>，下方看 <strong>Status</strong>（如 <code>201 Created</code>）和响应内容。第 7 节会有完整的 16 条测试清单。</li>
+    <li>点 <strong>Send</strong>，下方看 <strong>Status</strong>（如 <code>201 Created</code>）和响应内容。第 9 节会有完整的测试清单。</li>
   </ol>
   <div class="note">Postman 的云同步需要账号，但<strong>本地测试完全不用登录</strong>。如果不想装软件，VS Code 装 REST Client 后写 <code>POST http://localhost:3000/...</code> + JSON 也能达到同样效果。</div>
 
@@ -210,7 +211,7 @@ git --version</pre></div>
     <li>左侧 <strong>Database</strong> → <strong>Browse Collections</strong> → 如果你的项目里还没有任何库，点 <strong>Create Database</strong>。</li>
     <li>Database Name 填 <code>UserList</code>，Collection Name 填 <code>users</code> → <strong>Create</strong>。</li>
     <li>如果 <code>UserList</code> 已存在，点开它 → <strong>Create Collection</strong> → 名字填 <code>users</code> → <strong>Create</strong>。</li>
-    <li>第 7 节 POST 成功后回来刷新，就能看到一条条文档（带 <code>_id</code>、<code>id</code>、<code>email</code>、<code>username</code>）。</li>
+    <li>第 6 节 POST 成功后回来刷新，就能看到一条条文档（带 <code>_id</code>、<code>id</code>、<code>email</code>、<code>username</code>）。</li>
   </ol>
 
   <h3>1-8 Atlas 专属排错（连不上时对照这里）</h3>
@@ -228,12 +229,12 @@ git --version</pre></div>
 </section>
 
 <section id="s2">
-  <h2><span class="step">2</span>Plan the API + 建项目（照 Step 2/3 先写计划注释）</h2>
-  <div class="note">PDF Step 2 要求：<strong>写代码前先规划端点</strong>，Step 3 把计划以注释形式贴在 <code>app.js</code>（这里是 <code>server.js</code>）里当“作战地图”。注意老师的规律：<strong>POST 指向集合，PUT / DELETE 指向单条</strong>。</div>
+  <h2><span class="step">2</span>Plan the API + 建项目（Build-a-REST Step 2/3）</h2>
+  <div class="note">Build-a-REST 的 Step 2 要求：<strong>写代码前先规划端点</strong>，Step 3 把计划以注释形式贴在 <code>app.js</code>（这里是 <code>server.js</code>）里当“作战地图”。注意老师的规律：<strong>POST 指向集合，PUT / DELETE 指向单条</strong>。</div>
   <div class="codebox"><div class="bar"><span>server.js 顶部的计划注释（照抄这个格式）</span><button onclick="copyCode(this)">复制</button></div><pre>// ------------------------------------------------------------ the plan
 // Send a GET request to /api/users to READ a list of users
 // Send a GET request to /api/users/user/:id to READ (view) one user
-// Send a GET request to /api/users/random to READ (view) a random user
+// Send a GET request to /api/getrandomuser to READ (view) one random user
 // Send a POST request to /api/users/newuser to CREATE a new user
 // Send a PUT request to /api/users/modify/:id to UPDATE (edit) a user's username
 // Send a DELETE request to /api/users/delete/:id to DELETE a user</pre></div>
@@ -265,7 +266,7 @@ New-Item models/User.js, routes/users.js, server.js</pre></div>
     "mongoose": "^9.0.0"
   }
 }</pre></div>
-  <div class="warn"><code>npm start</code> = <code>node --watch server.js</code>（PDF Step 3：存盘自动重启，整个实验都让它开着，<code>Ctrl+C</code> 停止）。<strong>模块规范</strong>：一律 <code>require</code>（CommonJS），<code>package.json</code> 里绝不能有 <code>"type": "module"</code>，否则报 <code>require is not defined in ES module scope</code>。</div>
+  <div class="warn"><code>npm start</code> = <code>node --watch server.js</code>（MongoDB 教程 Step 4：存盘自动重启，整个实验都让它开着，<code>Ctrl+C</code> 停止）。<strong>模块规范</strong>：一律 <code>require</code>（CommonJS），<code>package.json</code> 里绝不能有 <code>"type": "module"</code>，否则报 <code>require is not defined in ES module scope</code>。</div>
   <div class="ok"><strong>✅ 过关</strong>：<code>node_modules/</code> 存在，计划注释已写在 <code>server.js</code> 顶部。</div>
 </section>
 
@@ -284,8 +285,8 @@ PORT=3000</pre></div>
 </section>
 
 <section id="s4">
-  <h2><span class="step">4</span>Schema / Model（照 Step 6 的写法）</h2>
-  <div class="note">题目字段：<code>id: number, unique, required</code>、<code>email: text, required</code>、<code>username: text</code>。老师 Step 6 的 Schema 用了 <code>type/required/trim/min</code> 和 <code>{ timestamps: true }</code>，这里照抄格式。<strong>Mongoose 没有 text 类型 → 用 String</strong>；<code>unique: true</code> 必须自己加。</div>
+  <h2><span class="step">4</span>Schema / Model（MongoDB 教程 Step 6）</h2>
+  <div class="note">题目字段：<code>id: number, unique, required</code>、<code>email: text, required</code>、<code>username: text</code>。MongoDB 教程 Step 6 的 Schema 用了 <code>type/required/trim/min</code> 和 <code>{ timestamps: true }</code>，这里照抄格式。<strong>Mongoose 没有 text 类型 → 用 String</strong>；<code>unique: true</code> 必须自己加。</div>
   <div class="codebox"><div class="bar"><span>models/User.js</span><button onclick="copyCode(this)">复制</button></div><pre>const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
@@ -303,8 +304,8 @@ module.exports = mongoose.model('User', userSchema);</pre></div>
 </section>
 
 <section id="s5">
-  <h2><span class="step">5</span>GET 列表 + 单条 + 404（Step 5/6/8）</h2>
-  <div class="warn"><strong>和老师例子的唯一结构差异</strong>：老师用 <code>findById()</code> 查默认 <code>_id</code>；本题要按业务字段 <code>id</code>（数字）查，所以换成 <code>findOne({ id })</code>。老师 Step 6 特意说明 <code>req.params.id</code> 是字符串要用 <code>Number()</code> 比——这里用 <code>parseId</code> 做转换并校验。</div>
+  <h2><span class="step">5</span>GET 列表 + 单条 + 404（MongoDB Step 8；Build-a-REST Step 6/8）</h2>
+  <div class="warn"><strong>和老师例子的唯一结构差异</strong>：老师用 <code>findById()</code> 查默认 <code>_id</code>；本题要按业务字段 <code>id</code>（数字）查，所以换成 <code>findOne({ id })</code>。Build-a-REST Step 6 特意说明 <code>req.params.id</code> 是字符串要用 <code>Number()</code> 比——这里用 <code>parseId</code> 做转换并校验。</div>
   <div class="codebox"><div class="bar"><span>routes/users.js — 第一部分（GET）</span><button onclick="copyCode(this)">复制</button></div><pre>const express = require('express');
 const User = require('../models/User');
 
@@ -343,13 +344,13 @@ router.get('/user/:id', parseId, async (req, res, next) => {
     next(err);
   }
 });</pre></div>
-  <div class="note">老师 Step 8 的重点：<strong>找不到必须 404 + JSON message，不能返回空 200</strong>。这里 <code>if (user) {...} else {...}</code> 的写法和第 8 步 PDF 完全一致。</div>
+  <div class="note">Build-a-REST Step 8 的重点：<strong>找不到必须 404 + JSON message，不能返回空 200</strong>。这里 <code>if (user) {...} else {...}</code> 的写法和该 PDF 完全一致。</div>
   <div class="ok"><strong>✅ 过关</strong>：这一段写完先别急，第 9 节统一测试。</div>
 </section>
 
 <section id="s6">
-  <h2><span class="step">6</span>POST + 校验 + try/catch（Step 10/11/12）</h2>
-  <div class="note">老师三步走：Step 10 用 <code>res.status(201).json(...)</code> 创建，<code>express.json()</code> 解析 body；Step 11 缺字段返回 <code>400</code>；Step 12 用 <code>try/catch</code>（最终 Step 17 改成 <code>next(err)</code>）。错误体在路由里用 <code>{ message: ... }</code>（老师 Step 8/11 的格式），统一错误处理器里用 <code>{ error: { message } }</code>（Step 17 的格式）。</div>
+  <h2><span class="step">6</span>POST + 校验 + try/catch（MongoDB Step 9；Build-a-REST Step 10/11/12）</h2>
+  <div class="note">老师三步走：MongoDB Step 9 / Build-a-REST Step 10 用 <code>res.status(201).json(...)</code> 创建，<code>express.json()</code> 解析 body；Build-a-REST Step 11 缺字段返回 <code>400</code>；Step 12 用 <code>try/catch</code>（最终 Step 17 改成 <code>next(err)</code>）。错误体在路由里用 <code>{ message: ... }</code>（Build-a-REST Step 8/11 的格式），统一错误处理器里用 <code>{ error: { message } }</code>（Step 17 的格式）。</div>
   <div class="codebox"><div class="bar"><span>routes/users.js — 追加 POST</span><button onclick="copyCode(this)">复制</button></div><pre>// Send a POST request to /api/users/newuser to CREATE a new user
 router.post('/newuser', async (req, res, next) => {
   try {
@@ -371,24 +372,21 @@ router.post('/newuser', async (req, res, next) => {
 </section>
 
 <section id="s7">
-  <h2><span class="step">7</span>PUT + DELETE（Step 13/14）</h2>
-  <div class="warn"><strong>按 PDF 改成了 204</strong>：老师 Step 13 原话 “nothing new to send back, so we answer <code>204 No Content</code>”。所以 PUT 成功不再返回更新后的对象，而是 <code>res.status(204).end()</code>；要验证改动就再 GET 一次。DELETE 同理 204。</div>
+  <h2><span class="step">7</span>PUT + DELETE（MongoDB Step 10/11；Build-a-REST Step 13/14）</h2>
+  <div class="warn"><strong>两本教材的 PUT 不一样，这里按主教材（MongoDB）走</strong>：MongoDB Step 10 明确写 PUT 返回 <strong>200 + 更新后的文档</strong>，用 <code>{ returnDocument: 'after', runValidators: true }</code>（Mongoose 9 写法，旧的 <code>new: true</code> 已废弃）；Build-a-REST Step 13 则用 204。老师原话 “Both are correct REST”，但本题是 MongoDB Lab，所以用 200。<strong>DELETE 两本一致，都是 204。</strong></div>
   <div class="codebox"><div class="bar"><span>routes/users.js — 追加 PUT / DELETE</span><button onclick="copyCode(this)">复制</button></div><pre>// Send a PUT request to /api/users/modify/:id to UPDATE (edit) a user's username
+// MongoDB tutorial Step 10: return 200 with the updated document
 router.put('/modify/:id', parseId, async (req, res, next) => {
   try {
-    const user = await User.findOne({ id: req.userId });
+    const user = await User.findOneAndUpdate(
+      { id: req.userId },
+      { username: req.body.username },
+      { returnDocument: 'after', runValidators: true }
+    );
     if (!user) {
-      res.status(404).json({ message: 'User not found.' });
-    } else if (!req.body.username) {
-      res.status(400).json({ message: 'username is required.' });
-    } else {
-      await User.findOneAndUpdate(
-        { id: req.userId },
-        { username: req.body.username },
-        { runValidators: true }
-      );
-      res.status(204).end();
+      return res.status(404).json({ message: 'User not found.' });
     }
+    res.json(user);
   } catch (err) {
     next(err);
   }
@@ -397,29 +395,30 @@ router.put('/modify/:id', parseId, async (req, res, next) => {
 // Send a DELETE request to /api/users/delete/:id to DELETE a user
 router.delete('/delete/:id', parseId, async (req, res, next) => {
   try {
-    const user = await User.findOne({ id: req.userId });
-    if (user) {
-      await User.findOneAndDelete({ id: req.userId });
-      res.status(204).end();
-    } else {
-      res.status(404).json({ message: 'User not found.' });
+    const user = await User.findOneAndDelete({ id: req.userId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
     }
+    res.status(204).end();
   } catch (err) {
     next(err);
   }
 });
 
-module.exports = router;</pre></div>
-  <div class="note">老师 Step 13 的 <strong>ONE REPLY PER REQUEST</strong> 原则：每个分支只发一次响应（<code>res.json</code> 或 <code>res.end</code>），否则会报 “Cannot set headers after they are sent”。上面的 <code>if / else if / else</code> 正好保证这一点。</div>
-  <div class="ok"><strong>✅ 过关</strong>：PUT / DELETE 成功都是 204，找不到都是 404。</div>
+module.exports = router;
+module.exports.getRandomUser = getRandomUser;</pre></div>
+  <div class="note">老师 Build-a-REST Step 13 的 <strong>ONE REPLY PER REQUEST</strong> 原则：每个分支只发一次响应（<code>res.json</code> 或 <code>res.end</code>），否则会报 “Cannot set headers after they are sent”。上面用 <code>return res.status(...).json(...)</code> 提前返回，保证后续 <code>res.json(user)</code> 不会被执行两次。</div>
+  <div class="ok"><strong>✅ 过关</strong>：PUT 成功 200 且返回更新后的用户名；DELETE 成功 204；找不到都是 404。</div>
 </section>
 
 <section id="s8">
-  <h2><span class="step">8</span>random + 路由顺序（Step 15）</h2>
-  <div class="warn">老师 Step 15 专门演示：如果 <code>/random</code> 写在 <code>/:id</code> 后面，Express 会把 “random” 当成 <code>:id</code>，返回 404 或 400。<strong>固定路径必须写在参数路径前面。</strong></div>
-  <div class="codebox"><div class="bar"><span>routes/users.js — 插在 GET /user/:id 之前</span><button onclick="copyCode(this)">复制</button></div><pre>// Send a GET request to /api/users/random to READ (view) a random user
-// It must come BEFORE /api/users/user/:id, or :id would catch the word 'random'
-router.get('/random', async (req, res, next) => {
+  <h2><span class="step">8</span>random 用户（Task 5，Build-a-REST Step 15）</h2>
+  <div class="warn"><strong>题目原文要求的是 <code>GET /api/getrandomuser</code></strong>（注意在 <code>/api</code> 下，不是 <code>/api/users/random</code>）。本教程两个都提供：题目路径 <code>/api/getrandomuser</code> 为主，教材风格的 <code>/api/users/random</code> 为辅，两者共用同一个处理函数。</div>
+  <div class="note">关于路由顺序：Build-a-REST Step 15 演示的是 <code>/quotes/random</code> 和 <code>/quotes/:id</code> <strong>同一层级</strong>时会冲突，固定路径必须写前面。但本题单条路径是 <code>/user/:id</code>（多一层 <code>user</code>），<code>/random</code> 根本不会被它匹配，所以<strong>实际不会冲突</strong>；我们仍然把 random 写在前面，保持好习惯。</div>
+  <div class="codebox"><div class="bar"><span>routes/users.js — 把 GET /user/:id 之前那段换成这个</span><button onclick="copyCode(this)">复制</button></div><pre>// Send a GET request to /api/users/random to READ (view) a random user
+// In the Quote API this had to come before /:id; here the single-user path
+// is /user/:id, so there is no clash, but we keep the order as a good habit.
+async function getRandomUser(req, res, next) {
   try {
     const count = await User.countDocuments();
     if (count === 0) {
@@ -432,8 +431,13 @@ router.get('/random', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});</pre></div>
-  <div class="ok"><strong>✅ 过关</strong>：<code>GET /api/users/random</code> 返回一位随机用户（Task 5 加分）。</div>
+}
+router.get('/random', getRandomUser);</pre></div>
+  <p>在函数末尾导出它，供 <code>server.js</code> 挂到题目的路径上（见第 7 节代码块最后两行）：<code>module.exports.getRandomUser = getRandomUser;</code></p>
+  <p>然后在 <code>server.js</code> 的 <code>app.use('/api/users', userRoutes)</code> 之后加一行：</p>
+  <div class="codebox"><div class="bar"><span>server.js — 题目要求的路径</span><button onclick="copyCode(this)">复制</button></div><pre>// Task 5 path exactly as written in the lab: GET /api/getrandomuser
+app.get('/api/getrandomuser', userRoutes.getRandomUser);</pre></div>
+  <div class="ok"><strong>✅ 过关</strong>：<code>GET /api/getrandomuser</code> 和 <code>GET /api/users/random</code> 都能返回一位随机用户（Task 5 加分）。</div>
 </section>
 
 <section id="s9">
@@ -452,7 +456,7 @@ const port = process.env.PORT || 3000;
 // ------------------------------------------------------------ the plan
 // Send a GET request to /api/users to READ a list of users
 // Send a GET request to /api/users/user/:id to READ (view) one user
-// Send a GET request to /api/users/random to READ (view) a random user
+// Send a GET request to /api/getrandomuser to READ (view) one random user
 // Send a POST request to /api/users/newuser to CREATE a new user
 // Send a PUT request to /api/users/modify/:id to UPDATE (edit) a user's username
 // Send a DELETE request to /api/users/delete/:id to DELETE a user
@@ -469,6 +473,9 @@ app.get('/', (req, res) =&gt; {
 app.use('/api/users', userRoutes);
 app.use('/user', userRoutes);   // the lab wording uses DELETE /user/delete/:id
 
+// Task 5 path exactly as written in the lab: GET /api/getrandomuser
+app.get('/api/getrandomuser', userRoutes.getRandomUser);
+
 // ------------------------------------------------ error handling
 // 1. No route above matched: make a 404 error and pass it on
 app.use((req, res, next) =&gt; {
@@ -479,11 +486,11 @@ app.use((req, res, next) =&gt; {
 
 // 2. The error handler (4 parameters): every next(err) ends up here
 app.use((err, req, res, next) =&gt; {
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({ error: { message: err.message } });
-  }
   if (err.code === 11000) {
     return res.status(400).json({ error: { message: 'Duplicate id: id must be unique.' } });
+  }
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ error: { message: err.message } });
   }
   res.status(err.status || 500);
   res.json({
@@ -520,10 +527,11 @@ start();</pre></div>
     <tr><td>3</td><td><code>POST /api/users/newuser</code></td><td><code>{"id":1,"email":"johnny@douglascollege.ca","username":"johnny"}</code></td><td><strong>201</strong> 新用户</td></tr>
     <tr><td>4</td><td><code>POST /api/users/newuser</code></td><td><code>{"id":2,"email":"a@b.com","username":"alex"}</code></td><td><strong>201</strong></td></tr>
     <tr><td>5</td><td><code>GET /api/users/user/1</code></td><td>—</td><td><strong>200</strong> 单个用户</td></tr>
-    <tr><td>6</td><td><code>GET /api/users/random</code></td><td>—</td><td><strong>200</strong> 随机一位</td></tr>
-    <tr><td>7</td><td><code>PUT /api/users/modify/1</code></td><td><code>{"username":"johnny-updated"}</code></td><td><strong>204</strong> 无内容；再 GET 验证已改</td></tr>
-    <tr><td>8</td><td><code>DELETE /user/delete/2</code></td><td>—</td><td><strong>204</strong> 无内容</td></tr>
-    <tr><td>9</td><td><code>GET /api/users</code></td><td>—</td><td><strong>200</strong> 只剩 1 笔</td></tr>
+    <tr><td>6</td><td><code>GET /api/getrandomuser</code>（题目路径）</td><td>—</td><td><strong>200</strong> 随机一位</td></tr>
+    <tr><td>7</td><td><code>GET /api/users/random</code>（兼容路径）</td><td>—</td><td><strong>200</strong> 随机一位</td></tr>
+    <tr><td>8</td><td><code>PUT /api/users/modify/1</code></td><td><code>{"username":"johnny-updated"}</code></td><td><strong>200</strong> 返回更新后的用户（username 已改）</td></tr>
+    <tr><td>9</td><td><code>DELETE /user/delete/2</code></td><td>—</td><td><strong>204</strong> 无内容</td></tr>
+    <tr><td>10</td><td><code>GET /api/users</code></td><td>—</td><td><strong>200</strong> 只剩 1 笔</td></tr>
   </table>
   <h3>9-3 错误处理测试（Task 4）</h3>
   <table>
@@ -535,7 +543,7 @@ start();</pre></div>
     <tr><td>PUT 没给 username</td><td><code>PUT /api/users/modify/1</code> body <code>{}</code></td><td><strong>400</strong></td></tr>
     <tr><td>不存在的路由</td><td><code>GET /nope</code></td><td><strong>404</strong> <code>{"error":{"message":"Not Found"}}</code></td></tr>
   </table>
-  <div class="ok"><strong>✅ 过关</strong>：以上 15 个测试全部符合预期，服务器没有崩溃。</div>
+  <div class="ok"><strong>✅ 过关</strong>：以上 16 个测试全部符合预期，服务器没有崩溃。</div>
 
   <h3>9-4 常见错误速查</h3>
   <table>
@@ -565,7 +573,7 @@ git push -u origin main</pre></div>
     </li>
     <li><code>render.com</code> → <strong>New Web Service</strong> → 连 GitHub 仓库 → Runtime: <strong>Node</strong>，Build Command: <code>npm install</code>，Start Command: <code>node server.js</code>（不要用 <code>npm start</code>，因为是 <code>--watch</code>），Instance: Free。</li>
     <li><strong>Environment</strong> → Add Environment Variable → <code>MONGODB_URI</code> 填你的连接串（含 <code>/UserList</code>）。<code>PORT</code> 交给 Render 自动提供。</li>
-    <li>Create Web Service，等出现 <code>Live</code>，浏览器打开应看到 <code>{"message":"Welcome to the UserList API"}</code>。</li>
+    <li>Create Web Service，等出现 <code>Live</code>，浏览器打开应看到 <code>{"message":"Welcome to the UserList API"}</code>。<strong>免费实例闲置会休眠</strong>，隔一阵子后的第一个请求可能要等约 1 分钟，属正常，不是挂了。</li>
   </ol>
   <h3>10-2 提交清单</h3>
   <ul class="check">
@@ -604,7 +612,8 @@ git push -u origin main</pre></div>
     <tr><td>PUT</td><td><code>/api/users/modify/:id</code></td><td>Task 3：改 username</td></tr>
     <tr><td>DELETE</td><td><code>/user/delete/:id</code></td><td>Task 3：删除（题目原路径）</td></tr>
     <tr><td>DELETE</td><td><code>/api/users/delete/:id</code></td><td>同上，兼容路径（额外）</td></tr>
-    <tr><td>GET</td><td><code>/api/users/random</code></td><td>Task 5：随机用户（加分）</td></tr>
+    <tr><td>GET</td><td><code>/api/getrandomuser</code></td><td>Task 5：随机用户（题目原路径，加分）</td></tr>
+    <tr><td>GET</td><td><code>/api/users/random</code></td><td>Task 5 兼容路径（教材风格，加分）</td></tr>
   </table>
 
   <h3>教材对照（想深入时看）</h3>
