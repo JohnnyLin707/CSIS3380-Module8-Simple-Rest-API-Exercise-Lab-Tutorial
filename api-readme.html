@@ -39,11 +39,47 @@
 <a class="back" href="index.html">← 返回完整图文教程</a>
 
 <section>
-  <h2>Setup</h2>
-  <div class="codebox"><div class="bar"><span>Terminal</span><button onclick="copyCode(this)">复制</button></div><pre>npm install
-cp .env.example .env
-# edit .env: paste your MongoDB Atlas connection string (with /UserList in it)
-npm start</pre></div>
+  <h2>Setup — 从零跑通（5 步，已实测成功）</h2>
+
+  <h3>1. 安装依赖</h3>
+  <div class="codebox"><div class="bar"><span>PowerShell（在项目目录）</span><button onclick="copyCode(this)">复制</button></div><pre>npm install</pre></div>
+
+  <h3>2. 填真实 .env（最关键，最容易卡住的一步）</h3>
+  <p>先复制模板，再检查内容：</p>
+  <div class="codebox"><div class="bar"><span>PowerShell</span><button onclick="copyCode(this)">复制</button></div><pre>cp .env.example .env
+Get-Content .env</pre></div>
+  <p>如果还看到 <code>CLUSTER</code> / <code>USER</code> / <code>PASSWORD</code> 占位符，说明是模板，必须替换成真实连接串（从 Atlas → Connect → Drivers → Node.js 复制，<code>mongodb.net/</code> 后面要有 <code>/UserList</code>）。用下面命令整行覆盖（用单引号，防止 <code>&amp;</code> 被 PowerShell 解释）：</p>
+  <div class="codebox"><div class="bar"><span>PowerShell — 换成你自己的值</span><button onclick="copyCode(this)">复制</button></div><pre>'MONGODB_URI=mongodb+srv://用户名:新密码@cluster1.6qa39ly.mongodb.net/UserList?retryWrites=true&amp;w=majority' | Set-Content .env
+'PORT=3000' | Add-Content .env</pre></div>
+  <p>⚠️ 若忘记这步，<code>npm start</code> 会报 <code>querySrv ENOTFOUND _mongodb._tcp.CLUSTER.mongodb.net</code>——原因就是连接串里还是假的 <code>CLUSTER</code>。另外 <code># edit .env ...</code> 那行在 PowerShell 里是<strong>注释，不会执行</strong>，必须手动改。</p>
+
+  <h3>3. 启动本地服务器</h3>
+  <div class="codebox"><div class="bar"><span>PowerShell</span><button onclick="copyCode(this)">复制</button></div><pre>npm start</pre></div>
+  <p>看到下面两行即成功；浏览器开 <code>http://localhost:3000/api/users</code> 应返回 <code>[]</code> 或用户数组。</p>
+  <div class="codebox"><div class="bar"><span>期望日志</span><button onclick="copyCode(this)">复制</button></div><pre>Connected to MongoDB
+UserList API listening on http://localhost:3000</pre></div>
+  <p>注意：<code>node --watch</code> <strong>不会因为 .env 改动自动重启</strong>（只监视被 require 的 JS 文件），改完 .env 要 <code>Ctrl+C</code> 后重新 <code>npm start</code>。</p>
+
+  <h3>4. Postman 测 CRUD（Task 3 / Task 4）</h3>
+  <p>地址均为 <code>http://localhost:3000</code>，Body 选 raw → JSON：</p>
+  <table>
+    <tr><th>#</th><th>请求</th><th>Body</th><th>预期</th></tr>
+    <tr><td>1</td><td><code>POST /api/users/newuser</code></td><td><code>{"id":1,"email":"jinran@douglascollege.ca","username":"jinran"}</code></td><td>201</td></tr>
+    <tr><td>2</td><td><code>GET /api/users</code></td><td>—</td><td>200，1 笔用户</td></tr>
+    <tr><td>3</td><td><code>GET /api/users/user/1</code></td><td>—</td><td>200</td></tr>
+    <tr><td>4</td><td><code>GET /api/getrandomuser</code></td><td>—</td><td>200，随机一位</td></tr>
+    <tr><td>5</td><td><code>PUT /api/users/modify/1</code></td><td><code>{"username":"jinran-updated"}</code></td><td>200 + 更新后用户</td></tr>
+    <tr><td>6</td><td><code>DELETE /user/delete/1</code></td><td>—</td><td>204</td></tr>
+    <tr><td>7</td><td><code>GET /api/users/user/999</code></td><td>—</td><td>404 <code>User not found.</code></td></tr>
+    <tr><td>8</td><td><code>GET /nope</code></td><td>—</td><td>404 <code>Not Found</code></td></tr>
+  </table>
+  <p>全对说明 Task 3 + Task 4 完成。测完 <code>Ctrl+C</code> 停服务器。</p>
+
+  <h3>5. 交 Blackboard（Task 7）</h3>
+  <p>部署已完成（见下方 Deploy 节），把 code 链接 + deployed link 一起交：</p>
+  <div class="codebox"><div class="bar"><span>提交文本</span><button onclick="copyCode(this)">复制</button></div><pre>Code: https://github.com/JohnnyLin707/CSIS3380-Module8-Simple-Rest-API-Exercise-Lab-Submission
+Deployed API: https://userlist-api-jinran.onrender.com/
+Name: Jinran | Course: CSIS 3380 | School: Douglas College</pre></div>
 </section>
 
 <section>
