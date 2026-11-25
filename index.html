@@ -378,6 +378,9 @@ router.post('/newuser', async (req, res, next) => {
 // MongoDB tutorial Step 10: return 200 with the updated document
 router.put('/modify/:id', parseId, async (req, res, next) => {
   try {
+    if (!req.body.username) {
+      return res.status(400).json({ message: 'username is required.' });
+    }
     const user = await User.findOneAndUpdate(
       { id: req.userId },
       { username: req.body.username },
@@ -540,7 +543,7 @@ start();</pre></div>
     <tr><td>id 不是数字</td><td><code>GET /api/users/user/abc</code></td><td><strong>400</strong> <code>id must be a number.</code></td></tr>
     <tr><td>缺 email</td><td><code>POST /api/users/newuser</code> body <code>{"id":3}</code></td><td><strong>400</strong> <code>id and email are required.</code></td></tr>
     <tr><td>重复 id（unique）</td><td>再 POST 一次 <code>id:1</code></td><td><strong>400</strong> <code>Duplicate id...</code>（不是 500！）</td></tr>
-    <tr><td>PUT 没给 username</td><td><code>PUT /api/users/modify/1</code> body <code>{}</code></td><td><strong>400</strong></td></tr>
+    <tr><td>PUT 没给 username</td><td><code>PUT /api/users/modify/1</code> body <code>{}</code></td><td><strong>400</strong> <code>username is required.</code>（注意 username 字段没设 required，必须自己校验，否则空值被 Mongoose 忽略而返回 200）</td></tr>
     <tr><td>不存在的路由</td><td><code>GET /nope</code></td><td><strong>404</strong> <code>{"error":{"message":"Not Found"}}</code></td></tr>
   </table>
   <div class="ok"><strong>✅ 过关</strong>：以上 16 个测试全部符合预期，服务器没有崩溃。</div>

@@ -78,6 +78,9 @@ router.post('/newuser', async (req, res, next) => {
 // MongoDB tutorial Step 10: return 200 with the updated document
 router.put('/modify/:id', parseId, async (req, res, next) => {
   try {
+    if (!req.body.username) {
+      return res.status(400).json({ message: 'username is required.' });
+    }
     const user = await User.findOneAndUpdate(
       { id: req.userId },
       { username: req.body.username },
